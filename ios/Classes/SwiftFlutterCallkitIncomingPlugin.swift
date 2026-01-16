@@ -632,14 +632,24 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
         }
         call.endCall()
         self.callManager.removeCall(call)
-        if (self.answerCall == nil && self.outgoingCall == nil) {
+        
+        // 🔧 FIX: Check if call was ACTUALLY connected, not just "accepted"
+        // On full-screen CallKit, pressing X can trigger CXAnswerCallAction (sets answerCall)
+        // then CXEndCallAction - but the call was never truly connected
+        // hasConnected is only true after audio session is established
+        let wasActuallyConnected = self.answerCall?.hasConnected ?? false
+        
+        if (self.answerCall == nil && self.outgoingCall == nil) || !wasActuallyConnected {
+            // DECLINE: call was never answered OR was "accepted" but never connected (false accept)
             sendEvent(SwiftFlutterCallkitIncomingPlugin.ACTION_CALL_DECLINE, self.data?.toJSON())
+            self.answerCall = nil  // Clear answerCall if it was a false accept
             if let appDelegate = UIApplication.shared.delegate as? CallkitIncomingAppDelegate {
                 appDelegate.onDecline(call, action)
             } else {
                 action.fulfill()
             }
-        }else {
+        } else {
+            // END: call was actually connected and is now ending normally
             self.answerCall = nil
             sendEvent(SwiftFlutterCallkitIncomingPlugin.ACTION_CALL_ENDED, call.data.toJSON())
             if let appDelegate = UIApplication.shared.delegate as? CallkitIncomingAppDelegate {
