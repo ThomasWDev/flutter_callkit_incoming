@@ -21,6 +21,7 @@ class AndroidParams {
     this.isShowFullLockedScreen,
     this.isImportant,
     this.isBot,
+    this.isShowDeclineButton,
   });
 
   /// Using custom notifications.
@@ -69,6 +70,11 @@ class AndroidParams {
   /// Used primarily to identify automated tooling.
   /// https://developer.android.com/reference/androidx/core/app/Person#isBot()
   final bool? isBot;
+
+  /// 🔧 FIX (Build 92): Show or hide decline button.
+  /// Set to false for emergency calls to prevent declining.
+  /// Default: true (show decline button)
+  final bool? isShowDeclineButton;
 
   factory AndroidParams.fromJson(Map<String, dynamic> json) =>
       _$AndroidParamsFromJson(json);

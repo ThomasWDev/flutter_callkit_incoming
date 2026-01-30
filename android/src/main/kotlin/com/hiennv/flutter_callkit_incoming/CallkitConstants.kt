@@ -79,4 +79,7 @@ object CallkitConstants {
     const val EXTRA_CALLKIT_IS_SHOW_FULL_LOCKED_SCREEN = "EXTRA_CALLKIT_IS_SHOW_FULL_LOCKED_SCREEN"
     const val EXTRA_CALLKIT_IS_IMPORTANT = "EXTRA_CALLKIT_IS_IMPORTANT"
     const val EXTRA_CALLKIT_IS_BOT = "EXTRA_CALLKIT_IS_BOT"
+    
+    // 🔧 FIX (Build 92): Add parameter to hide decline button for emergency calls
+    const val EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON = "EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON"
 }

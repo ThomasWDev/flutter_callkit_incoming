@@ -222,6 +222,13 @@ class CallkitIncomingActivity : Activity() {
         val textDecline = data?.getString(CallkitConstants.EXTRA_CALLKIT_TEXT_DECLINE, "")
         tvDecline.text =
             if (TextUtils.isEmpty(textDecline)) getString(R.string.text_decline) else textDecline
+            
+        // 🔧 FIX (Build 92): Hide decline button for emergency calls
+        val isShowDeclineButton = data?.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON, true) ?: true
+        if (!isShowDeclineButton) {
+            ivDeclineCall.visibility = View.GONE
+            tvDecline.visibility = View.GONE
+        }
 
         try {
             tvAccept.setTextColor(Color.parseColor(textColor))

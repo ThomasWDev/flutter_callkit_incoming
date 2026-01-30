@@ -140,6 +140,10 @@ data class Data(val args: Map<String, Any?>) {
 
     @JsonProperty("isBot")
     var isBot: Boolean = false
+    
+    // 🔧 FIX (Build 92): Add parameter to hide decline button for emergency calls
+    @JsonProperty("isShowDeclineButton")
+    var isShowDeclineButton: Boolean = true
 
     init {
         var android: Map<String, Any?>? = args["android"] as? HashMap<String, Any?>?
@@ -160,6 +164,7 @@ data class Data(val args: Map<String, Any?>) {
         isShowFullLockedScreen = android["isShowFullLockedScreen"] as? Boolean ?: true
         isImportant = android["isImportant"] as? Boolean ?: false
         isBot = android["isBot"] as? Boolean ?: false
+        isShowDeclineButton = android["isShowDeclineButton"] as? Boolean ?: true
 
 
         val missedNotification: Map<String, Any?>? =
@@ -325,6 +330,11 @@ data class Data(val args: Map<String, Any?>) {
             CallkitConstants.EXTRA_CALLKIT_IS_BOT,
             isBot,
         )
+        // 🔧 FIX (Build 92): Add parameter to hide decline button for emergency calls
+        bundle.putBoolean(
+            CallkitConstants.EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON,
+            isShowDeclineButton,
+        )
         return bundle
     }
 
@@ -430,6 +440,11 @@ data class Data(val args: Map<String, Any?>) {
             )
             data.isShowFullLockedScreen = bundle.getBoolean(
                 CallkitConstants.EXTRA_CALLKIT_IS_SHOW_FULL_LOCKED_SCREEN,
+                true
+            )
+            // 🔧 FIX (Build 92): Parse isShowDeclineButton from bundle
+            data.isShowDeclineButton = bundle.getBoolean(
+                CallkitConstants.EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON,
                 true
             )
             return data

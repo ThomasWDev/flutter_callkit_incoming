@@ -25,6 +25,7 @@ AndroidParams _$AndroidParamsFromJson(Map<String, dynamic> json) =>
       isShowFullLockedScreen: json['isShowFullLockedScreen'] as bool?,
       isImportant: json['isImportant'] as bool?,
       isBot: json['isBot'] as bool?,
+      isShowDeclineButton: json['isShowDeclineButton'] as bool?,
     );
 
 Map<String, dynamic> _$AndroidParamsToJson(AndroidParams instance) =>
@@ -46,4 +47,5 @@ Map<String, dynamic> _$AndroidParamsToJson(AndroidParams instance) =>
       'isShowFullLockedScreen': instance.isShowFullLockedScreen,
       'isImportant': instance.isImportant,
       'isBot': instance.isBot,
+      'isShowDeclineButton': instance.isShowDeclineButton,
     };

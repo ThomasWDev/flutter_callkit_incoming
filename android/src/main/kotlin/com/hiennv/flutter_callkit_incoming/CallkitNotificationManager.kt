@@ -325,17 +325,23 @@ class CallkitNotificationManager(
                 )
             } else {
                 notificationBuilder?.setContentTitle(caller)
-                val textDecline = data.getString(CallkitConstants.EXTRA_CALLKIT_TEXT_DECLINE, "")
-                val declineAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                    R.drawable.ic_decline,
-                    if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_decline) else textDecline,
-                    getDeclinePendingIntent(notificationId, data)
-                ).build()
-                notificationBuilder?.addAction(declineAction)
+                
+                // 🔧 FIX (Build 92): Only add decline action if isShowDeclineButton is true
+                val isShowDeclineButton = data.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON, true)
+                if (isShowDeclineButton) {
+                    val textDecline = data.getString(CallkitConstants.EXTRA_CALLKIT_TEXT_DECLINE, "")
+                    val declineAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
+                        R.drawable.ic_decline,
+                        if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_decline) else textDecline,
+                        getDeclinePendingIntent(notificationId, data)
+                    ).build()
+                    notificationBuilder?.addAction(declineAction)
+                }
+                
                 val textAccept = data.getString(CallkitConstants.EXTRA_CALLKIT_TEXT_ACCEPT, "")
                 val acceptAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
                     R.drawable.ic_accept,
-                    if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_accept) else textAccept,
+                    if (TextUtils.isEmpty(textAccept)) context.getString(R.string.text_accept) else textAccept,
                     getAcceptPendingIntent(notificationId, data)
                 ).build()
                 notificationBuilder?.addAction(acceptAction)
