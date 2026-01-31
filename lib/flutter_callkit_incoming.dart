@@ -91,6 +91,21 @@ class FlutterCallkitIncoming {
     await _channel.invokeMethod("endCall", {'id': id});
   }
 
+  /// Mark a call as accepted.
+  /// 
+  /// Use this when the call is answered via custom UI (not via CallKit/plugin UI).
+  /// This ensures that when `endCall()` is called later, it fires ACTION_CALL_ENDED
+  /// instead of ACTION_CALL_DECLINE.
+  /// 
+  /// Example: When user presses "Answer" on a custom Flutter dialog, call this method
+  /// BEFORE calling `endCall()` to dismiss the notification.
+  /// 
+  /// On iOS: Updates CallKit state.
+  /// On Android: Updates the internal call state.
+  static Future setCallAccepted(String id) async {
+    await _channel.invokeMethod("setCallAccepted", {'id': id});
+  }
+
   /// Set call has been connected successfully.
   /// On iOS, using Callkit(update a history into the Phone app).
   /// On Android, Nothing(only callback event listener).

@@ -189,6 +189,12 @@ public class SwiftFlutterCallkitIncomingPlugin: NSObject, FlutterPlugin, CXProvi
             }
             result(true)
             break
+        case "setCallAccepted":
+            // Mark a call as accepted (answered via custom UI)
+            // On iOS, this is a no-op since CallKit handles state internally
+            // But we include it for API consistency with Android
+            result(true)
+            break
         case "activeCalls":
             result(self.callManager.activeCalls())
             break;

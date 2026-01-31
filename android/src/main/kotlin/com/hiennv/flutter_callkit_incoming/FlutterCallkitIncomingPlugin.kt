@@ -303,6 +303,14 @@ class FlutterCallkitIncomingPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                     result.success(true)
                 }
 
+                "setCallAccepted" -> {
+                    // Mark a call as accepted (answered via custom UI)
+                    // This ensures endCall() will fire ACTION_CALL_ENDED instead of ACTION_CALL_DECLINE
+                    val data = Data(call.arguments() ?: HashMap())
+                    setCallAccepted(context, data.id)
+                    result.success(true)
+                }
+
                 "endAllCalls" -> {
                     val calls = getDataActiveCalls(context)
                     calls.forEach {

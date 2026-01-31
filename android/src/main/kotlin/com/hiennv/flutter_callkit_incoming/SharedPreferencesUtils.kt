@@ -39,6 +39,28 @@ fun removeCall(context: Context?, data: Data) {
     putString(context, "ACTIVE_CALLS", Utils.getGsonInstance().writeValueAsString(arrayData))
 }
 
+/**
+ * Mark a call as accepted (answered via custom UI).
+ * 
+ * Use this when the call is answered outside of the plugin's UI (e.g., via a custom Flutter dialog).
+ * This ensures that when endCall() is called later, it will fire ACTION_CALL_ENDED
+ * instead of ACTION_CALL_DECLINE.
+ */
+fun setCallAccepted(context: Context?, callId: String?) {
+    if (context == null || callId == null) return
+    val json = getString(context, "ACTIVE_CALLS", "[]")
+    val arrayData: ArrayList<Data> = Utils.getGsonInstance()
+        .readValue(json, object : TypeReference<ArrayList<Data>>() {})
+    val currentCall = arrayData.find { it.id == callId }
+    if (currentCall != null) {
+        currentCall.isAccepted = true
+        putString(context, "ACTIVE_CALLS", Utils.getGsonInstance().writeValueAsString(arrayData))
+        Log.d("CALLKIT", "[setCallAccepted] Marked call as accepted: $callId")
+    } else {
+        Log.d("CALLKIT", "[setCallAccepted] Call not found: $callId")
+    }
+}
+
 fun removeAllCalls(context: Context?) {
     putString(context, "ACTIVE_CALLS", "[]")
     remove(context, "ACTIVE_CALLS")
