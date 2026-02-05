@@ -356,6 +356,13 @@ class CallkitNotificationManager(
     private fun initInComingNotificationViews(
         notificationId: Int, remoteViews: RemoteViews, data: Bundle
     ) {
+        // Set app name if provided
+        val appName = data.getString(CallkitConstants.EXTRA_CALLKIT_APP_NAME, "")
+        if (!appName.isNullOrEmpty()) {
+            remoteViews.setTextViewText(R.id.tvAppName, appName)
+            remoteViews.setViewVisibility(R.id.tvAppName, View.VISIBLE)
+        }
+        
         remoteViews.setTextViewText(
             R.id.tvNameCaller, data.getString(CallkitConstants.EXTRA_CALLKIT_NAME_CALLER, "")
         )

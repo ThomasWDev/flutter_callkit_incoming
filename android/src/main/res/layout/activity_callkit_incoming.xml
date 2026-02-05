@@ -95,6 +95,18 @@
                     android:textSize="@dimen/size_text_action"
                     tools:text="Some info" />
 
+                <TextView
+                    android:id="@+id/tvAppName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="#B0FFFFFF"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:text="CompassCare" />
+
             </LinearLayout>
 
         </com.hiennv.flutter_callkit_incoming.widgets.RippleRelativeLayout>
