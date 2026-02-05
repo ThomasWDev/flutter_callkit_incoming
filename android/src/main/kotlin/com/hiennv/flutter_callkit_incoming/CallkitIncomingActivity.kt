@@ -336,10 +336,18 @@ class CallkitIncomingActivity : Activity() {
             TransparentActivity.getIntent(this, CallkitConstants.ACTION_CALL_ACCEPT, data)
         startActivity(acceptIntent)
 
-        dismissKeyguard()
+        // GMA-627: Removed dismissKeyguard() call
+        // requestDismissKeyguard() only works for PIN/pattern locks, NOT biometric locks.
+        // For biometric locks, it fails silently and the call never connects.
+        // Since setShowWhenLocked(true) is already set in onCreate(), the call activity
+        // will display over the lock screen without needing to dismiss it.
+        // The user can unlock their phone after the call if needed.
         finish()
     }
 
+    // GMA-627: Deprecated - requestDismissKeyguard doesn't work with biometric locks
+    // Keeping for reference but no longer called
+    @Suppress("unused")
     private fun dismissKeyguard() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
