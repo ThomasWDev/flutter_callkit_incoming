@@ -232,10 +232,15 @@ class CallkitIncomingActivity : Activity() {
             if (TextUtils.isEmpty(textDecline)) getString(R.string.text_decline) else textDecline
             
         // 🔧 FIX (Build 92): Hide decline button for emergency calls
+        // 🔧 FIX (Build 144): Hide ENTIRE decline container including ripple animation
         val isShowDeclineButton = data?.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON, true) ?: true
         if (!isShowDeclineButton) {
             ivDeclineCall.visibility = View.GONE
             tvDecline.visibility = View.GONE
+            // Hide the parent RippleRelativeLayout and its LinearLayout container
+            // to prevent the ripple animation from showing without a button
+            (ivDeclineCall.parent as? android.view.View)?.visibility = View.GONE
+            (ivDeclineCall.parent?.parent as? android.view.View)?.visibility = View.GONE
         }
 
         try {
