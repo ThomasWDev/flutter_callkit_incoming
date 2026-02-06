@@ -189,10 +189,20 @@ class CallkitNotificationManager(
         )
         notificationBuilder?.setOnlyAlertOnce(true)
         notificationBuilder?.setSound(null)
-        notificationBuilder?.setFullScreenIntent(
-            getActivityPendingIntent(notificationId, data), true
-        )
-        notificationBuilder?.setContentIntent(getActivityPendingIntent(notificationId, data))
+        // GMA-579: On Android 14+ (UPSIDE_DOWN_CAKE), CallStyle.forIncomingCall() handles
+        // all incoming call UI natively - foreground heads-up, lock screen display, and DND.
+        // Setting fullScreenIntent on Android 14+ causes DUAL UI on Samsung devices:
+        // both the system CallStyle notification AND the full-screen CallkitIncomingActivity
+        // appear simultaneously. Only use fullScreenIntent on pre-Android 14.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            notificationBuilder?.setFullScreenIntent(
+                getActivityPendingIntent(notificationId, data), true
+            )
+            notificationBuilder?.setContentIntent(getActivityPendingIntent(notificationId, data))
+        } else {
+            // On Android 14+, tapping the notification body opens the main app
+            notificationBuilder?.setContentIntent(getAppPendingIntent(notificationId, data))
+        }
         notificationBuilder?.setDeleteIntent(getTimeOutPendingIntent(notificationId, data))
         val typeCall = data.getInt(CallkitConstants.EXTRA_CALLKIT_TYPE, -1)
         var smallIcon = context.applicationInfo.icon
