@@ -95,6 +95,32 @@ class CallkitIncomingActivity : Activity() {
         SentryHelper.log(TAG,
             "[CALLKIT_ACTIVITY] onCreate - Activity CREATED, taskId=$taskId",
             data = mapOf("taskId" to taskId))
+
+        // GMA-630: On Android 14+ with CallStyle notifications, Samsung OneUI shows BOTH
+        // a heads-up notification AND launches this full-screen Activity simultaneously
+        // (dual UI bug). Fix: when the device is NOT locked, finish this Activity
+        // immediately and let the system CallStyle notification handle the UI.
+        // Only show this Activity when the screen is locked (where it's needed to wake screen).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            val isDeviceLocked = keyguardManager.isDeviceLocked || keyguardManager.isKeyguardLocked
+            val isScreenOn = powerManager.isInteractive
+
+            if (isScreenOn && !isDeviceLocked) {
+                SentryHelper.log(TAG,
+                    "[CALLKIT_ACTIVITY] FINISHING - Device unlocked, CallStyle notification handles UI",
+                    data = mapOf("callId" to getCallId(), "isScreenOn" to isScreenOn,
+                        "isDeviceLocked" to isDeviceLocked))
+                finish()
+                return
+            }
+            SentryHelper.log(TAG,
+                "[CALLKIT_ACTIVITY] SHOWING - Device locked/screen off, showing full-screen UI",
+                data = mapOf("callId" to getCallId(), "isScreenOn" to isScreenOn,
+                    "isDeviceLocked" to isDeviceLocked))
+        }
+
         requestedOrientation = if (!Utils.isTablet(this@CallkitIncomingActivity)) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         } else {
