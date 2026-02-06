@@ -11,7 +11,7 @@ import android.util.Log
 class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
 
     companion object {
-        private const val TAG = "CallkitIncomingReceiver"
+        private const val TAG = "CallkitBroadcastRx"
         var silenceEvents = false
 
         fun getIntent(context: Context, action: String, data: Bundle?) =
@@ -86,24 +86,42 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
         return FlutterCallkitIncomingPlugin.getInstance()?.getCallkitNotificationManager()
     }
 
+    /** Extract callId from the data bundle for logging. */
+    private fun extractCallId(data: Bundle): String {
+        return data.getString(CallkitConstants.EXTRA_CALLKIT_ID, "unknown") ?: "unknown"
+    }
 
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA) ?: return
+        val callId = extractCallId(data)
+        // Extract short action name for readable logging
+        val shortAction = action.substringAfterLast(".")
+
         when (action) {
             "${context.packageName}.${CallkitConstants.ACTION_CALL_INCOMING}" -> {
                 try {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_INCOMING - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     getCallkitNotificationManager()?.showIncomingNotification(data)
                     sendEventFlutter(CallkitConstants.ACTION_CALL_INCOMING, data)
                     addCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_INCOMING: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_START}" -> {
                 try {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_START - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     // start service and show ongoing call when call is accepted
                     CallkitNotificationService.startServiceWithAction(
                         context,
@@ -113,13 +131,19 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     sendEventFlutter(CallkitConstants.ACTION_CALL_START, data)
                     addCall(context, Data.fromBundle(data), true)
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_START: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_ACCEPT}" -> {
                 try {
-                    // Log.d(TAG, "[CALLKIT] 📱 ACTION_CALL_ACCEPT")
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_ACCEPT - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     FlutterCallkitIncomingPlugin.notifyEventCallbacks(CallkitEventCallback.CallEvent.ACCEPT, data)
                     // start service and show ongoing call when call is accepted
                     CallkitNotificationService.startServiceWithAction(
@@ -129,14 +153,23 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     )
                     sendEventFlutter(CallkitConstants.ACTION_CALL_ACCEPT, data)
                     addCall(context, Data.fromBundle(data), true)
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACCEPT processed successfully - callId=$callId",
+                        data = mapOf("callId" to callId))
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_ACCEPT: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_DECLINE}" -> {
                 try {
-                    // Log.d(TAG, "[CALLKIT] 📱 ACTION_CALL_DECLINE")           
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_DECLINE - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     // Notify native decline callbacks
                     FlutterCallkitIncomingPlugin.notifyEventCallbacks(CallkitEventCallback.CallEvent.DECLINE, data)
                     // clear notification
@@ -145,13 +178,23 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     context.sendBroadcast(CallkitIncomingActivity.getIntentEnded(context, false))
                     sendEventFlutter(CallkitConstants.ACTION_CALL_DECLINE, data)
                     removeCall(context, Data.fromBundle(data))
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] DECLINE processed successfully - callId=$callId",
+                        data = mapOf("callId" to callId))
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_DECLINE: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_ENDED}" -> {
                 try {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_ENDED - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     // clear notification and stop service
                     getCallkitNotificationManager()?.clearIncomingNotification(data, false)
                     CallkitNotificationService.stopService(context)
@@ -160,12 +203,20 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     sendEventFlutter(CallkitConstants.ACTION_CALL_ENDED, data)
                     removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_ENDED: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_TIMEOUT}" -> {
                 try {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_TIMEOUT - callId=$callId",
+                        SentryHelper.Level.WARNING,
+                        mapOf("callId" to callId, "action" to shortAction))
                     // clear notification and show miss notification
                     val notificationManager = getCallkitNotificationManager()
                     notificationManager?.clearIncomingNotification(data, false)
@@ -173,22 +224,36 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     sendEventFlutter(CallkitConstants.ACTION_CALL_TIMEOUT, data)
                     removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_TIMEOUT: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_CONNECTED}" -> {
                 try {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_CONNECTED - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     // update notification on going connected
                     getCallkitNotificationManager()?.showOngoingCallNotification(data, true)
                     sendEventFlutter(CallkitConstants.ACTION_CALL_CONNECTED, data)
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_CONNECTED: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }
 
             "${context.packageName}.${CallkitConstants.ACTION_CALL_CALLBACK}" -> {
                 try {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ACTION_CALL_CALLBACK - callId=$callId",
+                        data = mapOf("callId" to callId, "action" to shortAction))
                     getCallkitNotificationManager()?.clearMissCallNotification(data)
                     sendEventFlutter(CallkitConstants.ACTION_CALL_CALLBACK, data)
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
@@ -196,6 +261,10 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                         context.sendBroadcast(closeNotificationPanel)
                     }
                 } catch (error: Exception) {
+                    SentryHelper.log(TAG,
+                        "[CALLKIT_BROADCAST] ERROR in ACTION_CALL_CALLBACK: ${error.message}",
+                        SentryHelper.Level.ERROR,
+                        mapOf("callId" to callId, "error" to (error.message ?: "")))
                     Log.e(TAG, null, error)
                 }
             }

@@ -30,6 +30,7 @@ import android.util.Log
 class CallkitIncomingActivity : Activity() {
 
     companion object {
+        private const val TAG = "CallkitIncomingActivity"
 
         private const val ACTION_ENDED_CALL_INCOMING =
             "com.hiennv.flutter_callkit_incoming.ACTION_ENDED_CALL_INCOMING"
@@ -48,10 +49,19 @@ class CallkitIncomingActivity : Activity() {
         }
     }
 
+    /** Extract the callId from the incoming data bundle for logging context. */
+    private fun getCallId(): String {
+        val data = intent?.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA)
+        return data?.getString(CallkitConstants.EXTRA_CALLKIT_ID, "unknown") ?: "unknown"
+    }
+
     inner class EndedCallkitIncomingBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (!isFinishing) {
                 val isAccepted = intent.getBooleanExtra("ACCEPTED", false)
+                SentryHelper.log(TAG,
+                    "[CALLKIT_ACTIVITY] EndedBroadcast received: isAccepted=$isAccepted, callId=${getCallId()}",
+                    data = mapOf("callId" to getCallId(), "isAccepted" to isAccepted))
                 if (isAccepted) {
                     finishDelayed()
                 } else {
@@ -82,7 +92,9 @@ class CallkitIncomingActivity : Activity() {
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onCreate - Activity CREATED, taskId=$taskId")
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] onCreate - Activity CREATED, taskId=$taskId",
+            data = mapOf("taskId" to taskId))
         requestedOrientation = if (!Utils.isTablet(this@CallkitIncomingActivity)) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         } else {
@@ -162,7 +174,18 @@ class CallkitIncomingActivity : Activity() {
 
     private fun incomingData(intent: Intent) {
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA)
-        if (data == null) finish()
+        if (data == null) {
+            SentryHelper.log(TAG,
+                "[CALLKIT_ACTIVITY] incomingData - data is NULL, finishing",
+                SentryHelper.Level.ERROR)
+            finish()
+        }
+
+        val callId = data?.getString(CallkitConstants.EXTRA_CALLKIT_ID, "unknown") ?: "unknown"
+        val callerName = data?.getString(CallkitConstants.EXTRA_CALLKIT_NAME_CALLER, "") ?: ""
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] incomingData - callId=$callId, caller=$callerName",
+            data = mapOf("callId" to callId, "callerName" to callerName))
 
         val isShowFullLockedScreen =
             data?.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_FULL_LOCKED_SCREEN, true)
@@ -232,10 +255,12 @@ class CallkitIncomingActivity : Activity() {
         tvDecline.text =
             if (TextUtils.isEmpty(textDecline)) getString(R.string.text_decline) else textDecline
             
-        // 🔧 FIX (Build 92): Hide decline button for emergency calls
-        // 🔧 FIX (Build 144): Hide ENTIRE decline container including ripple animation
+        // FIX (Build 92): Hide decline button for emergency calls
+        // FIX (Build 144): Hide ENTIRE decline container including ripple animation
         val isShowDeclineButton = data?.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_DECLINE_BUTTON, true) ?: true
         if (!isShowDeclineButton) {
+            SentryHelper.log(TAG,
+                "[CALLKIT_ACTIVITY] Hiding decline button (emergency call), callId=$callId")
             ivDeclineCall.visibility = View.GONE
             tvDecline.visibility = View.GONE
             // Hide the parent RippleRelativeLayout and its LinearLayout container
@@ -279,8 +304,15 @@ class CallkitIncomingActivity : Activity() {
                 ?: currentSystemTime
 
         val timeOut = duration - abs(currentSystemTime - timeStartCall)
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] finishTimeout set: ${timeOut}ms, callId=${getCallId()}",
+            data = mapOf("timeoutMs" to timeOut, "callId" to getCallId()))
         Handler(Looper.getMainLooper()).postDelayed({
             if (!isFinishing) {
+                SentryHelper.log(TAG,
+                    "[CALLKIT_ACTIVITY] Timeout reached - finishing, callId=${getCallId()}",
+                    SentryHelper.Level.WARNING,
+                    mapOf("callId" to getCallId()))
                 finishTask()
             }
         }, timeOut)
@@ -333,6 +365,8 @@ class CallkitIncomingActivity : Activity() {
         tvDecline.setOnClickListener {
             onDeclineClick()
         }
+
+        SentryHelper.log(TAG, "[CALLKIT_ACTIVITY] initView complete - click listeners set")
     }
 
     private fun animateAcceptCall() {
@@ -343,7 +377,10 @@ class CallkitIncomingActivity : Activity() {
 
 
     private fun onAcceptClick() {
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onAcceptClick triggered")
+        val callId = getCallId()
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] ACCEPT TAPPED - callId=$callId",
+            data = mapOf("callId" to callId, "action" to "accept"))
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA)
 
 
@@ -364,6 +401,9 @@ class CallkitIncomingActivity : Activity() {
         // Since setShowWhenLocked(true) is already set in onCreate(), the call activity
         // will display over the lock screen without needing to dismiss it.
         // The user can unlock their phone after the call if needed.
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] Accept processed - finishing Activity, callId=$callId",
+            data = mapOf("callId" to callId))
         finish()
     }
 
@@ -378,7 +418,10 @@ class CallkitIncomingActivity : Activity() {
     }
 
     private fun onDeclineClick() {
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onDeclineClick triggered")
+        val callId = getCallId()
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] DECLINE TAPPED - callId=$callId",
+            data = mapOf("callId" to callId, "action" to "decline"))
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA)
 
         val intent =
@@ -388,12 +431,17 @@ class CallkitIncomingActivity : Activity() {
     }
 
     private fun finishDelayed() {
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] finishDelayed (1s) - callId=${getCallId()}")
         Handler(Looper.getMainLooper()).postDelayed({
             finishTask()
         }, 1000)
     }
 
     private fun finishTask() {
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] finishTask called - callId=${getCallId()}",
+            data = mapOf("callId" to getCallId()))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             finishAndRemoveTask()
         } else {
@@ -402,24 +450,35 @@ class CallkitIncomingActivity : Activity() {
     }
 
     override fun onDestroy() {
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onDestroy - Activity DESTROYED, isFinishing=$isFinishing")
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] onDestroy - isFinishing=$isFinishing, callId=${getCallId()}",
+            if (isFinishing) SentryHelper.Level.INFO else SentryHelper.Level.WARNING,
+            mapOf("callId" to getCallId(), "isFinishing" to isFinishing))
         unregisterReceiver(endedCallkitIncomingBroadcastReceiver)
         super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onResume - Activity VISIBLE")
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] onResume - VISIBLE to user, callId=${getCallId()}",
+            data = mapOf("callId" to getCallId()))
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onPause - Activity PAUSED")
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] onPause - callId=${getCallId()}",
+            SentryHelper.Level.WARNING,
+            mapOf("callId" to getCallId()))
     }
 
     override fun onStop() {
         super.onStop()
-        Log.d("CallkitIncomingActivity", "[CALLKIT] onStop - Activity STOPPED, isFinishing=$isFinishing")
+        SentryHelper.log(TAG,
+            "[CALLKIT_ACTIVITY] onStop - isFinishing=$isFinishing, callId=${getCallId()}",
+            if (isFinishing) SentryHelper.Level.INFO else SentryHelper.Level.WARNING,
+            mapOf("callId" to getCallId(), "isFinishing" to isFinishing))
     }
 
     override fun onBackPressed() {}
