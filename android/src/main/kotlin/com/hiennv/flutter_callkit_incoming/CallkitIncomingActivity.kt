@@ -82,6 +82,7 @@ class CallkitIncomingActivity : Activity() {
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onCreate - Activity CREATED, taskId=$taskId")
         requestedOrientation = if (!Utils.isTablet(this@CallkitIncomingActivity)) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         } else {
@@ -342,7 +343,7 @@ class CallkitIncomingActivity : Activity() {
 
 
     private fun onAcceptClick() {
-        // Log.d("CallkitIncomingActivity", "[CALLKIT] 📱 onAcceptClick")
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onAcceptClick triggered")
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA)
 
 
@@ -377,7 +378,7 @@ class CallkitIncomingActivity : Activity() {
     }
 
     private fun onDeclineClick() {
-        // Log.d("CallkitIncomingActivity", "[CALLKIT] 📱 onDeclineClick")
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onDeclineClick triggered")
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA)
 
         val intent =
@@ -401,8 +402,24 @@ class CallkitIncomingActivity : Activity() {
     }
 
     override fun onDestroy() {
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onDestroy - Activity DESTROYED, isFinishing=$isFinishing")
         unregisterReceiver(endedCallkitIncomingBroadcastReceiver)
         super.onDestroy()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onResume - Activity VISIBLE")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onPause - Activity PAUSED")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d("CallkitIncomingActivity", "[CALLKIT] onStop - Activity STOPPED, isFinishing=$isFinishing")
     }
 
     override fun onBackPressed() {}
