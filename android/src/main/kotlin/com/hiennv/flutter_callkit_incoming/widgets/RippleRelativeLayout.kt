@@ -117,6 +117,10 @@ class RippleRelativeLayout : RelativeLayout {
 
         init {
             visibility = INVISIBLE
+            // Ensure ripple animation views don't intercept touch events
+            // This fixes Accept/Decline buttons not responding on lock screen
+            isClickable = false
+            isFocusable = false
         }
     }
 

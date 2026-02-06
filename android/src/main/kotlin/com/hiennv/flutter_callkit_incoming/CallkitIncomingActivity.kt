@@ -310,10 +310,26 @@ class CallkitIncomingActivity : Activity() {
         tvDecline = findViewById(R.id.tvDecline)
         animateAcceptCall()
 
+        // Set click listeners on BOTH the ImageView AND the parent containers
+        // to ensure touch events are captured reliably on lock screen
         ivAcceptCall.setOnClickListener {
             onAcceptClick()
         }
         ivDeclineCall.setOnClickListener {
+            onDeclineClick()
+        }
+        // Also set click on the parent LinearLayout containers for larger touch target
+        (ivAcceptCall.parent?.parent as? android.view.View)?.setOnClickListener {
+            onAcceptClick()
+        }
+        (ivDeclineCall.parent?.parent as? android.view.View)?.setOnClickListener {
+            onDeclineClick()
+        }
+        // And on the text labels
+        tvAccept.setOnClickListener {
+            onAcceptClick()
+        }
+        tvDecline.setOnClickListener {
             onDeclineClick()
         }
     }
