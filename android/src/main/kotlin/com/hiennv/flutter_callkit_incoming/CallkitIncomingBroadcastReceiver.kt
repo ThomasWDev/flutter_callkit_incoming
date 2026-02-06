@@ -141,6 +141,8 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     FlutterCallkitIncomingPlugin.notifyEventCallbacks(CallkitEventCallback.CallEvent.DECLINE, data)
                     // clear notification
                     getCallkitNotificationManager()?.clearIncomingNotification(data, false)
+                    // Tell CallkitIncomingActivity to finish (fixes notification-banner decline not closing activity)
+                    context.sendBroadcast(CallkitIncomingActivity.getIntentEnded(context, false))
                     sendEventFlutter(CallkitConstants.ACTION_CALL_DECLINE, data)
                     removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
@@ -153,6 +155,8 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     // clear notification and stop service
                     getCallkitNotificationManager()?.clearIncomingNotification(data, false)
                     CallkitNotificationService.stopService(context)
+                    // Tell CallkitIncomingActivity to finish (fixes endCall/endAllCalls not closing activity)
+                    context.sendBroadcast(CallkitIncomingActivity.getIntentEnded(context, false))
                     sendEventFlutter(CallkitConstants.ACTION_CALL_ENDED, data)
                     removeCall(context, Data.fromBundle(data))
                 } catch (error: Exception) {
