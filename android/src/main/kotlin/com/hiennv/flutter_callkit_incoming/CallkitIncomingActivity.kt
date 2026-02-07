@@ -480,7 +480,16 @@ class CallkitIncomingActivity : Activity() {
             "[CALLKIT_ACTIVITY] onDestroy - isFinishing=$isFinishing, callId=${getCallId()}",
             if (isFinishing) SentryHelper.Level.INFO else SentryHelper.Level.WARNING,
             mapOf("callId" to getCallId(), "isFinishing" to isFinishing))
-        unregisterReceiver(endedCallkitIncomingBroadcastReceiver)
+        try {
+            unregisterReceiver(endedCallkitIncomingBroadcastReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Receiver was never registered - this happens when onCreate() finishes early
+            // on Android 14+ unlocked devices (GMA-630 dual UI fix skips registerReceiver)
+            SentryHelper.log(TAG,
+                "[CALLKIT_ACTIVITY] onDestroy - receiver not registered (early finish on Android 14+)",
+                SentryHelper.Level.WARNING,
+                mapOf("callId" to getCallId()))
+        }
         super.onDestroy()
     }
 
